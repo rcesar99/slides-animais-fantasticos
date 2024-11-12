@@ -28,14 +28,11 @@ export default class Slide {
       movetype = "touchmove";
     }
 
-    this.wrapper.addEventListener(movetype, this.onMove, { passive: true });  // passive: true ->  "Pode ficar tranquilo, eu NÃO vou usar preventDefault() neste evento". Isso permite que o navegador comece a rolagem imediatamente, sem esperar seu código terminar. (não aparece mensagem de warning no console)
+    this.wrapper.addEventListener(movetype, this.onMove, { passive: true }); // passive: true ->  "Pode ficar tranquilo, eu NÃO vou usar preventDefault() neste evento". Isso permite que o navegador comece a rolagem imediatamente, sem esperar seu código terminar. (não aparece mensagem de warning no console)
   }
 
   onMove(event) {
-    const pointerPosition =
-       event.type === "mousemove"
-        ? event.clientX 
-        : event.changedTouches[0].clientX;
+    const pointerPosition = event.type === "mousemove" ? event.clientX : event.changedTouches[0].clientX;
     const finalPosition = this.updatePosition(pointerPosition);
     this.moveSlide(finalPosition);
   }
@@ -50,7 +47,7 @@ export default class Slide {
     this.wrapper.addEventListener("mousedown", this.onStart);
     this.wrapper.addEventListener("mouseup", this.onEnd);
 
-    this.wrapper.addEventListener("touchstart", this.onStart, { passive: true });// passive: true ->  "Pode ficar tranquilo, eu NÃO vou usar preventDefault() neste evento". Isso permite que o navegador comece a rolagem imediatamente, sem esperar seu código terminar. (não aparece mensagem de warning no console)
+    this.wrapper.addEventListener("touchstart", this.onStart, { passive: true }); // passive: true ->  "Pode ficar tranquilo, eu NÃO vou usar preventDefault() neste evento". Isso permite que o navegador comece a rolagem imediatamente, sem esperar seu código terminar. (não aparece mensagem de warning no console)
     this.wrapper.addEventListener("touchend", this.onEnd, { passive: true }); // passive: true ->  "Pode ficar tranquilo, eu NÃO vou usar preventDefault() neste evento". Isso permite que o navegador comece a rolagem imediatamente, sem esperar seu código terminar. (não aparece mensagem de warning no console)
   }
 
@@ -60,9 +57,40 @@ export default class Slide {
     this.onEnd = this.onEnd.bind(this);
   }
 
+  // Slides config
+
+  slidePosition(slide) {
+    const margin = (this.wrapper.offsetWidth - slide.offsetWidth) / 2;
+    return -(slide.offsetLeft - margin);
+  }
+
+  slidesConfig() {
+    this.slideArray = [...this.slide.children].map((element) => {
+      const position = this.slidePosition(element);
+      return { position, element };
+    });
+  }
+
+  slidesIndexNav(index) {
+    const last = this.slideArray.lenght - 1;
+    this.index = {
+      prev: index ? index - 1 : null,
+      active: index,
+      next: index === last ? null : index + 1,
+    };
+  }
+
+  changeSlide(index) {
+    const activeSlide = this.slideArray[index];
+    this.moveSlide(activeSlide.position);
+    this.slidesIndexNav(index);
+    this.distance.finalPosition = activeSlide.position;
+  }
+
   init() {
     this.bindEvents();
     this.addSlideEvents();
+    this.slidesConfig();
     return this;
   }
 }
