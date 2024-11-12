@@ -17,24 +17,41 @@ export default class Slide {
   }
 
   onStart(event) {
-    event.preventDefault();
-    this.distance.startX = event.clientX;
-    this.wrapper.addEventListener("mousemove", this.onMove);
+    let movetype;
+
+    if (event.type === "mousedown") {
+      event.preventDefault();
+      this.distance.startX = event.clientX;
+      movetype = "mousemove";
+    } else {
+      this.distance.startX = event.changedTouches[0].clientX;
+      movetype = "touchmove";
+    }
+
+    this.wrapper.addEventListener(movetype, this.onMove, { passive: true });  // passive: true ->  "Pode ficar tranquilo, eu NÃO vou usar preventDefault() neste evento". Isso permite que o navegador comece a rolagem imediatamente, sem esperar seu código terminar. (não aparece mensagem de warning no console)
   }
 
   onMove(event) {
-    const finalPosition = this.updatePosition(event.clientX);
+    const pointerPosition =
+       event.type === "mousemove"
+        ? event.clientX 
+        : event.changedTouches[0].clientX;
+    const finalPosition = this.updatePosition(pointerPosition);
     this.moveSlide(finalPosition);
   }
 
   onEnd(event) {
-    this.wrapper.removeEventListener("mousemove", this.onMove);
+    const moveType = event.type === "mouseup" ? "mousemove" : "touchmove";
+    this.wrapper.removeEventListener(moveType, this.onMove);
     this.distance.finalPosition = this.distance.movePosition;
   }
 
   addSlideEvents() {
     this.wrapper.addEventListener("mousedown", this.onStart);
     this.wrapper.addEventListener("mouseup", this.onEnd);
+
+    this.wrapper.addEventListener("touchstart", this.onStart, { passive: true });// passive: true ->  "Pode ficar tranquilo, eu NÃO vou usar preventDefault() neste evento". Isso permite que o navegador comece a rolagem imediatamente, sem esperar seu código terminar. (não aparece mensagem de warning no console)
+    this.wrapper.addEventListener("touchend", this.onEnd, { passive: true }); // passive: true ->  "Pode ficar tranquilo, eu NÃO vou usar preventDefault() neste evento". Isso permite que o navegador comece a rolagem imediatamente, sem esperar seu código terminar. (não aparece mensagem de warning no console)
   }
 
   bindEvents() {
