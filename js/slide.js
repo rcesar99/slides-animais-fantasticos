@@ -2,8 +2,11 @@ export default class Slide {
   constructor(slide, wrapper) {
     this.slide = document.querySelector(slide);
     this.wrapper = document.querySelector(wrapper);
-
     this.distance = { finalPosition: 0, startX: 0, movement: 0 };
+  }
+
+  transition(active) {
+    this.slide.style.transition = active ? "transform .3s" : "";
   }
 
   moveSlide(distX) {
@@ -18,7 +21,6 @@ export default class Slide {
 
   onStart(event) {
     let movetype;
-
     if (event.type === "mousedown") {
       event.preventDefault();
       this.distance.startX = event.clientX;
@@ -27,8 +29,9 @@ export default class Slide {
       this.distance.startX = event.changedTouches[0].clientX;
       movetype = "touchmove";
     }
-
-    this.wrapper.addEventListener(movetype, this.onMove, { passive: true }); // passive: true ->  "Pode ficar tranquilo, eu NÃO vou usar preventDefault() neste evento". Isso permite que o navegador comece a rolagem imediatamente, sem esperar seu código terminar. (não aparece mensagem de warning no console)
+    // passive: true ->  "Pode ficar tranquilo, eu NÃO vou usar preventDefault() neste evento". Isso permite que o navegador comece a rolagem imediatamente, sem esperar seu código terminar. (não aparece mensagem de warning no console)
+    this.wrapper.addEventListener(movetype, this.onMove, { passive: true });
+    this.transition(false);
   }
 
   onMove(event) {
@@ -41,6 +44,14 @@ export default class Slide {
     const moveType = event.type === "mouseup" ? "mousemove" : "touchmove";
     this.wrapper.removeEventListener(moveType, this.onMove);
     this.distance.finalPosition = this.distance.movePosition;
+    this.transition(true);
+    this.changeSlideOnEnd();
+  }
+
+  changeSlideOnEnd() {
+    if (this.distance.movement > 120 && this.index.next !== undefined) this.activeNextSlide();
+    else if (this.distance.movement < -120 && this.index.prev !== undefined) this.activePrevSlide();
+    else this.changeSlide(this.index.active);
   }
 
   addSlideEvents() {
@@ -72,11 +83,11 @@ export default class Slide {
   }
 
   slidesIndexNav(index) {
-    const last = this.slideArray.lenght - 1;
+    const last = this.slideArray.length - 1;
     this.index = {
-      prev: index ? index - 1 : null,
+      prev: index ? index - 1 : undefined,
       active: index,
-      next: index === last ? null : index + 1,
+      next: index === last ? undefined : index + 1,
     };
   }
 
@@ -87,10 +98,20 @@ export default class Slide {
     this.distance.finalPosition = activeSlide.position;
   }
 
+  activePrevSlide() {
+    if (this.index.prev !== undefined) this.changeSlide(this.index.prev);
+  }
+
+  activeNextSlide() {
+    if (this.index.next !== undefined) this.changeSlide(this.index.next);
+  }
+
   init() {
     this.bindEvents();
-    this.addSlideEvents();
+    this.transition(true);
     this.slidesConfig();
+    this.slidesIndexNav(0);
+    this.addSlideEvents();
     return this;
   }
 }
